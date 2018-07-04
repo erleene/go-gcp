@@ -3,25 +3,19 @@ package storage
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
 )
 
+// //Contents...
 type Contents struct {
 	Name        string
 	TimeCreated time.Time
 }
 
-
-ctx := context.Background()
-client, err := storage.NewClient(ctx)
-if err != nil {
-	return err
-}
-
+//List Buckets
 func ListBuckets(client *storage.Client, projectID string) ([]string, error) {
 	ctx := context.Background()
 
@@ -42,7 +36,7 @@ func ListBuckets(client *storage.Client, projectID string) ([]string, error) {
 	return buckets, nil
 }
 
-//list contents that are older than given days
+//ListContentsOfBucket
 func ListContentsOfBucket(client *storage.Client, projectID string, bucketName string) ([]Contents, error) {
 	ctx := context.Background()
 
@@ -80,9 +74,10 @@ func ListContentsOfBucket(client *storage.Client, projectID string, bucketName s
 				//add to a list of contents to delete
 				olderContents = append(olderContents, Contents{
 					Name:        attrs.Name,
-					TimeCreated: attrs.Created.Format("Mon Jan 2 15:04:05 -0700 MST 2006"),
+					TimeCreated: attrs.Created,
 				})
 			}
 		}
+	}
 	return olderContents, nil
 }

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -66,15 +65,15 @@ func ListContentsOfBucket(client *storage.Client, projectID string, bucketName s
 			diff := now.Sub(v.TimeCreated)
 			//convert diff to days instead of hours
 			days := int(diff.Hours() / 24)
-			//print those that are 50 days old
+			//print those that are 45 days old
 			thresh := 45
 			if days >= thresh {
-				fmt.Println(v.TimeCreated.Format("Mon Jan 2 15:04:05 -0700 MST 2006"))
-				fmt.Println(days)
+				//fmt.Println(v.TimeCreated.Format("Mon Jan 2 15:04:05 -0700 MST 2006"))
+				//fmt.Println(days)
 				//add to a list of contents to delete
 				olderContents = append(olderContents, Contents{
-					Name:        attrs.Name,
-					TimeCreated: attrs.Created,
+					Name:        v.Name,
+					TimeCreated: v.TimeCreated,
 				})
 			}
 		}

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -39,8 +40,6 @@ func ListBuckets(client *storage.Client, projectID string) ([]string, error) {
 func ListContentsOfBucket(client *storage.Client, projectID string, bucketName string) ([]Contents, error) {
 	ctx := context.Background()
 
-	//var contents []string //to store the contents of a bucket
-	var contents []Contents
 	var olderContents []Contents
 
 	it := client.Bucket(bucketName).Objects(ctx, nil)
@@ -53,29 +52,24 @@ func ListContentsOfBucket(client *storage.Client, projectID string, bucketName s
 		if err != nil {
 			return nil, err
 		}
-		//add each one content of bucket to struct array
-		contents = append(contents, Contents{
-			Name:        attrs.Name,
-			TimeCreated: attrs.Created,
-		})
 
-		for _, v := range contents {
+		//check if it is 45 days older
+		now := time.Now()
+		diff := now.Sub(attrs.Created)
+		days := int(diff.Hours() / 24)
+		thresh := 45
 
-			now := time.Now()
-			diff := now.Sub(v.TimeCreated)
-			//convert diff to days instead of hours
-			days := int(diff.Hours() / 24)
-			//print those that are 45 days old
-			thresh := 45
-			if days >= thresh {
-				//fmt.Println(v.TimeCreated.Format("Mon Jan 2 15:04:05 -0700 MST 2006"))
-				//fmt.Println(days)
-				//add to a list of contents to delete
-				olderContents = append(olderContents, Contents{
-					Name:        v.Name,
-					TimeCreated: v.TimeCreated,
-				})
-			}
+		if days >= thresh {
+			//add to a list of contents to delete
+			fmt.Println(attrs.Name)
+			fmt.Println(attrs.Created.Format("Mon Jan 2 15:04:05 -0700 MST 2006"))
+			fmt.Println(days)
+
+			//add the contents that needs to be deleted
+			olderContents = append(olderContents, Contents{
+				Name:        attrs.Name,
+				TimeCreated: attrs.Created,
+			})
 		}
 	}
 	return olderContents, nil

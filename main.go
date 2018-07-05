@@ -34,8 +34,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//print the buckets
-	//fmt.Println(storageBuckets)
 
 	for _, bucketName := range storageBuckets {
 		if bucketName == "uatscreenshots" {

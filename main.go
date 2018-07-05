@@ -30,23 +30,27 @@ func main() {
 	}
 
 	//list all buckets
-	storageBuckets, err := store.ListBuckets(client, projectID)
+	storageBucket, err := store.ListBucket(client, projectID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, bucketName := range storageBuckets {
+	for _, bucketName := range storageBucket {
 		if bucketName == "uatscreenshots" {
 			fmt.Println("UAT Screenshot bucket exist")
 
-			//listcontents
-			contents, err := store.ListContentsOfBucket(client, projectID, bucketName)
+			err := store.DeleteContentsOfBucket(client, projectID, bucketName)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("Contents of %s:\n %v \n", bucketName, contents)
-			//loop through array struct
-			//change to type map[type]type
+
+			// //listcontents
+			// contents, err := store.ListContentsOfBucket(client, projectID, bucketName)
+			// if err != nil {
+			// 	log.Fatal(err)
+			// }
+			// fmt.Printf("Contents of %s:\n %v \n", bucketName, contents)
+			// //loop through contents to delete
 		}
 	}
 }

@@ -15,11 +15,11 @@ type Contents struct {
 	TimeCreated time.Time
 }
 
-//List Buckets
-func ListBuckets(client *storage.Client, projectID string) ([]string, error) {
+//List Bucket UAT Screenshot
+func ListBucket(client *storage.Client, projectID string) ([]string, error) {
 	ctx := context.Background()
 
-	var buckets []string
+	var bucket []string
 
 	it := client.Buckets(ctx, projectID)
 
@@ -31,16 +31,22 @@ func ListBuckets(client *storage.Client, projectID string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		buckets = append(buckets, battrs.Name)
+		//check if UAT screenshot exist
+		switch {
+		case battrs.Name == "uatscreenshots":
+			bucket = append(bucket, battrs.Name)
+		default:
+			break
+		}
 	}
-	return buckets, nil
+	return bucket, nil
 }
 
-//ListContentsOfBucket
-func ListContentsOfBucket(client *storage.Client, projectID string, bucketName string) ([]Contents, error) {
+//DeleteContentsOfBucket
+func DeleteContentsOfBucket(client *storage.Client, projectID string, bucketName string) error {
 	ctx := context.Background()
-
-	var olderContents []Contents
+	now := time.Now()
+	thresh := 60
 
 	it := client.Bucket(bucketName).Objects(ctx, nil)
 
@@ -49,28 +55,25 @@ func ListContentsOfBucket(client *storage.Client, projectID string, bucketName s
 		if err == iterator.Done {
 			break
 		}
-		if err != nil {
-			return nil, err
+		if err != nil && err != iterator.Done {
+			return err
 		}
 
 		//check if it is 45 days older
-		now := time.Now()
 		diff := now.Sub(attrs.Created)
 		days := int(diff.Hours() / 24)
-		thresh := 45
 
 		if days >= thresh {
 			//add to a list of contents to delete
 			fmt.Println(attrs.Name)
 			fmt.Println(attrs.Created.Format("Mon Jan 2 15:04:05 -0700 MST 2006"))
 			fmt.Println(days)
-
-			//add the contents that needs to be deleted
-			olderContents = append(olderContents, Contents{
-				Name:        attrs.Name,
-				TimeCreated: attrs.Created,
-			})
+			//
+			fmt.Printf("Deleting...%s", attrs.Name)
+			// if err := client.Bucket(bucketName).Object(attrs.Name).Delete(ctx); err != nil {
+			// 	log.Fatal(err)
+			//	}
 		}
 	}
-	return olderContents, nil
+	return nil
 }

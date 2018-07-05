@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -15,40 +15,38 @@ type Contents struct {
 	TimeCreated time.Time
 }
 
-//List Bucket UAT Screenshot
-func ListBucket(client *storage.Client, projectID string) ([]string, error) {
-	ctx := context.Background()
-
-	var bucket []string
-
-	it := client.Buckets(ctx, projectID)
-
-	for {
-		battrs, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		//check if UAT screenshot exist
-		switch {
-		case battrs.Name == "uatscreenshots":
-			bucket = append(bucket, battrs.Name)
-		default:
-			break
-		}
-	}
-	return bucket, nil
+type storager struct {
+	ctx       context.Context
+	client    *storage.Client
+	projectID string
 }
 
-//DeleteContentsOfBucket
-func DeleteContentsOfBucket(client *storage.Client, projectID string, bucketName string) error {
-	ctx := context.Background()
-	now := time.Now()
-	thresh := 60
+// Folder is interfacing with the Google Cloud Bucket
+type Folder interface {
+	// Delete will remove all contents inside the bucket that are after the defined threshold
+	Delete(bucketName string, threshold int) error
+}
 
-	it := client.Bucket(bucketName).Objects(ctx, nil)
+// New is to enable user to create a Folder instance
+func New(projectID string) (Folder, error) {
+	if projectID == "" {
+		return &storager{}, errors.New("Please provide a project ID")
+	}
+	client, err := storage.NewClient(context.Background())
+	if err != nil {
+		return &storager{}, err
+	}
+	return &storager{
+		ctx:       context.Background(),
+		client:    client,
+		projectID: projectID,
+	}, nil
+}
+
+func (store *storager) Delete(bucketName string, threshold int) error {
+	now := time.Now()
+
+	it := store.client.Bucket(bucketName).Objects(store.ctx, nil)
 
 	for {
 		attrs, err := it.Next()
@@ -59,20 +57,13 @@ func DeleteContentsOfBucket(client *storage.Client, projectID string, bucketName
 			return err
 		}
 
-		//check if it is 45 days older
 		diff := now.Sub(attrs.Created)
 		days := int(diff.Hours() / 24)
 
-		if days >= thresh {
-			//add to a list of contents to delete
-			fmt.Println(attrs.Name)
-			fmt.Println(attrs.Created.Format("Mon Jan 2 15:04:05 -0700 MST 2006"))
-			fmt.Println(days)
-			//
-			fmt.Printf("Deleting...%s", attrs.Name)
-			// if err := client.Bucket(bucketName).Object(attrs.Name).Delete(ctx); err != nil {
-			// 	log.Fatal(err)
-			//	}
+		if days >= threshold {
+			if err := store.client.Bucket(bucketName).Object(attrs.Name).Delete(store.ctx); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

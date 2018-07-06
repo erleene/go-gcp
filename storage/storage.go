@@ -9,12 +9,6 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// //Contents...
-type Contents struct {
-	Name        string
-	TimeCreated time.Time
-}
-
 type storager struct {
 	ctx       context.Context
 	client    *storage.Client

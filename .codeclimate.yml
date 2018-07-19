@@ -30,3 +30,12 @@ checks:
   identical-code:
     config:
       threshold: # language-specific defaults. an override will affect all languages.
+plugins:
+  gofmt:
+    enabled: true
+  golint:
+    enabled: true
+    config:
+      min_confidence: 0.9
+  govet:
+    enabled: true

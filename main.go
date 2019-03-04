@@ -7,14 +7,14 @@ import (
 )
 
 func main() {
-	projectID := "beamery-preview"
+	projectID := "name-of-project"
 
 	fold, err := store.New(projectID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err = fold.Delete("uatscreenshots", 14); err != nil {
+	if err = fold.Delete("name-of-bucket", 14); err != nil {
 		log.Fatal(err)
 	}
 }
